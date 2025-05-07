@@ -33,3 +33,5 @@ A React Native app that allows users to create, manage, and visualize multiple c
 ### 5: Bulk Actions
 Add Start, Pause, and Reset buttons at the category level to control all timers within that category simultaneously.
 
+### 6: User Feedback
+Show a modal with a congratulatory message and the timer's name when a timer completes.

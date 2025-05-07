@@ -9,11 +9,14 @@ import {
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import TimerCard from './TimerCard';
 import BulkActionControls from './BulkActionControl';
+import TimerCompleteModal from './TimerCompleteFeedback';
 
 
 const TimerListScreen = () => {
     const [timers, setTimers] = useState([]);
     const [expandedCategories, setExpandedCategories] = useState({});
+    const [completedTimer, setCompletedTimer] = useState(null);
+
 
 
     // for Bulk Actions
@@ -90,6 +93,9 @@ const TimerListScreen = () => {
             prev.map(timer => {
               if (timer.status === 'Running' && timer.timeLeft > 0) {
                 const updatedTime = timer.timeLeft - 1;
+                if (updatedTime === 0) {
+                  setCompletedTimer(timer); // <- Trigger modal here
+                }
                 return {
                   ...timer,
                   timeLeft: updatedTime,
@@ -129,6 +135,13 @@ const TimerListScreen = () => {
       );
 
     return (
+      <>
+      {completedTimer && (
+        <TimerCompleteModal
+          timerName={completedTimer.name}
+          onClose={() => setCompletedTimer(null)}
+        />
+      )}
         <FlatList
             data={Object.keys(groupedTimers)}
             keyExtractor={(item) => item}
@@ -154,6 +167,9 @@ const TimerListScreen = () => {
                 </View>
             )}
         />
+
+</>
+
     );
 };
 
