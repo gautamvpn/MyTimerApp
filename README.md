@@ -2,6 +2,9 @@
 
 A React Native app that allows users to create, manage, and visualize multiple customizable timers with category-based grouping and progress tracking.
 
+### creating a new project with expo
+npx create-expo-app MyTimerApp --template blank
+
 ## Features
 
 ### 1. Add Timer
