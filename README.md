@@ -43,3 +43,6 @@ Maintain a log of completed timers with the following details:
 - **Completion Time**
 
 View the history on a dedicated **History** screen.
+
+### Deleting Record
+Implemented deleting History Records with deleting category Timers
