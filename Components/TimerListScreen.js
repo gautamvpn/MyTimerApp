@@ -1,16 +1,17 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   TouchableOpacity,
   FlatList,
+  Alert,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import TimerCard from './TimerCard';
 import BulkActionControls from './BulkActionControl';
 import TimerCompleteModal from './TimerCompleteFeedback';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 
 
 const TimerListScreen = () => {
@@ -55,10 +56,35 @@ const TimerListScreen = () => {
 
 
 
+  // This will reload timers every time the TimerListScreen is focused — no need to restart the app manually
+  useFocusEffect(
+    useCallback(() => {
+      loadTimers();
+    }, [])
+  )
 
-  useEffect(() => {
-    loadTimers();
-  }, []);
+  //  Confirm Before Deleting Category
+  const confirmDeleteCategory = (category) => {
+    Alert.alert(
+      'Delete Category',
+      `Are you sure you want to delete the entire "${category}" category and its timers?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Delete', onPress: () => deleteCategory(category), style: 'destructive' },
+      ]
+    );
+  };
+
+  // Delete Category logic
+  const deleteCategory = async (category) => {
+    const filtered = timers.filter(timer => timer.category !== category);
+    setTimers(filtered);
+    try {
+      await AsyncStorage.setItem('timers', JSON.stringify(filtered));
+    } catch (err) {
+      console.error('Failed to update storage after deleting category', err);
+    }
+  };
 
   const loadTimers = async () => {
     try {
@@ -92,24 +118,24 @@ const TimerListScreen = () => {
 
   const saveToHistory = async (timer) => {
     if (!timer || typeof timer !== 'object') return; // ⛔ prevent crash
-  
+
     try {
       const stored = await AsyncStorage.getItem('timerHistory');
       const history = stored ? JSON.parse(stored) : [];
-  
+
       const newEntry = {
         id: timer.id,
         name: timer.name,
         category: timer.category || 'Uncategorized', // Fallback if undefined
         completedAt: new Date().toISOString(),
       };
-  
+
       await AsyncStorage.setItem('timerHistory', JSON.stringify([newEntry, ...history]));
     } catch (error) {
       console.error('Failed to save history', error);
     }
   };
-  
+
 
   // Navigate to the History screen with the completedTimers data
   const navigateToHistory = () => {
@@ -123,7 +149,7 @@ const TimerListScreen = () => {
           if (timer.status === 'Running' && timer.timeLeft > 0) {
             const updatedTime = timer.timeLeft - 1;
             if (updatedTime === 0) {
-              if(timer){
+              if (timer) {
                 saveToHistory(timer);
                 setCompletedTimer(timer); // <- Trigger modal here
 
@@ -179,35 +205,43 @@ const TimerListScreen = () => {
 
       <View style={styles.container}>
 
-      <TouchableOpacity onPress={navigateToHistory} style={styles.historyButton}>
-  <Text style={styles.historyButtonText}>View History</Text>
-</TouchableOpacity>
+        <TouchableOpacity onPress={navigateToHistory} style={styles.historyButton}>
+          <Text style={styles.historyButtonText}>View History</Text>
+        </TouchableOpacity>
 
-      <FlatList
-        data={Object.keys(groupedTimers)}
-        keyExtractor={(item) => item}
-        renderItem={({ item: category }) => (
-          <View style={styles.categorySection}>
-            <TouchableOpacity onPress={() => toggleCategory(category)}>
-              <View style={styles.categoryHeader}>
-                <Text style={styles.categoryTitle}>{category}</Text>
-                <Text>{expandedCategories[category] ? '-' : '+'}</Text>
-              </View>
-            </TouchableOpacity>
-            {expandedCategories[category] && (
-              <>
-                <BulkActionControls
-                  category={category}
-                  onStartAll={handleStartAll}
-                  onPauseAll={handlePauseAll}
-                  onResetAll={handleResetAll}
-                />
-                {groupedTimers[category].map(renderTimer)}
-              </>
-            )}
-          </View>
-        )}
-      />
+        <FlatList
+          data={Object.keys(groupedTimers)}
+          keyExtractor={(item) => item}
+          renderItem={({ item: category }) => (
+            <View style={styles.categorySection}>
+              <TouchableOpacity onPress={() => toggleCategory(category)}>
+                <View style={styles.categoryHeader}>
+                  <Text style={styles.categoryTitle}>{category}</Text>
+                  <View style={{ flexDirection: 'row', gap: 10 }}>
+                    <TouchableOpacity onPress={() => toggleCategory(category)}>
+                      <Text style={styles.toggle}>{expandedCategories[category] ? '-' : '+'}</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity onPress={() => confirmDeleteCategory(category)}>
+                      <Text style={styles.delete}>🗑️</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+
+              </TouchableOpacity>
+              {expandedCategories[category] && (
+                <>
+                  <BulkActionControls
+                    category={category}
+                    onStartAll={handleStartAll}
+                    onPauseAll={handlePauseAll}
+                    onResetAll={handleResetAll}
+                  />
+                  {groupedTimers[category].map(renderTimer)}
+                </>
+              )}
+            </View>
+          )}
+        />
       </View>
 
 
@@ -270,4 +304,14 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     fontSize: 14,
   },
+  toggle: {
+  fontSize: 18,
+  paddingHorizontal: 8,
+},
+delete: {
+  fontSize: 18,
+  color: 'red',
+  paddingHorizontal: 8,
+},
+
 });

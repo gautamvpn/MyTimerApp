@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, FlatList, StyleSheet } from 'react-native';
+import { View, Text, FlatList, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const HistoryScreen = () => {
@@ -10,23 +10,53 @@ const HistoryScreen = () => {
   }, []);
 
   const loadHistory = async () => {
-    const stored = await AsyncStorage.getItem('timerHistory');
-    setHistory(stored ? JSON.parse(stored) : []);
+    try {
+      const stored = await AsyncStorage.getItem('timerHistory');
+      const parsed = stored ? JSON.parse(stored) : [];
+      setHistory(parsed);
+    } catch (error) {
+      console.error('Failed to load history', error);
+    }
   };
+
+  const deleteEntry = async (id) => {
+    try {
+      const filtered = history.filter(item => item.id !== id);
+      await AsyncStorage.setItem('timerHistory', JSON.stringify(filtered));
+      setHistory(filtered);
+    } catch (error) {
+      console.error('Failed to delete entry', error);
+    }
+  };
+
+  const confirmDelete = (id) => {
+    Alert.alert(
+      'Delete Entry',
+      'Are you sure you want to delete this history item?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Delete', onPress: () => deleteEntry(id), style: 'destructive' },
+      ]
+    );
+  };
+
+  const renderItem = ({ item }) => (
+    <View style={styles.entry}>
+      <Text style={styles.text}>
+        {item.name} ({item.category}) - {new Date(item.completedAt).toLocaleString()}
+      </Text>
+      <TouchableOpacity onPress={() => confirmDelete(item.id)}>
+        <Text style={styles.delete}>🗑️</Text>
+      </TouchableOpacity>
+    </View>
+  );
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Completed Timers</Text>
       <FlatList
         data={history}
-        keyExtractor={(item, index) => item.id || `${index}`}
-        renderItem={({ item }) => (
-          <View style={styles.entry}>
-            <Text style={styles.name}>{item.name}</Text>
-            <Text style={styles.category}>Category: {item.category}</Text>
-            <Text style={styles.time}>{new Date(item.completedAt).toLocaleString()}</Text>
-          </View>
-        )}
+        keyExtractor={(item) => item.id}
+        renderItem={renderItem}
       />
     </View>
   );
@@ -35,17 +65,27 @@ const HistoryScreen = () => {
 export default HistoryScreen;
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 20 },
-  title: { fontSize: 20, fontWeight: 'bold', marginBottom: 10 },
-  entry: { padding: 10, borderBottomWidth: 1, borderColor: '#ccc' },
-  time: { fontSize: 12, color: '#666' },
-  name: {
-  fontSize: 16,
-  fontWeight: '600',
-},
-category: {
-  fontSize: 14,
-  color: '#555',
-  marginTop: 2,
-},
+  container: {
+    flex: 1,
+    padding: 12,
+    backgroundColor: '#f9f9f9',
+  },
+  entry: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    padding: 12,
+    backgroundColor: '#fff',
+    borderRadius: 8,
+    marginBottom: 10,
+    elevation: 2,
+  },
+  text: {
+    fontSize: 14,
+    flex: 1,
+  },
+  delete: {
+    fontSize: 18,
+    color: 'red',
+    marginLeft: 12,
+  },
 });
