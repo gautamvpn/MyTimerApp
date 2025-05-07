@@ -28,3 +28,8 @@ A React Native app that allows users to create, manage, and visualize multiple c
 ### 4. Progress Visualization
 - Each timer displays a horizontal progress bar to show elapsed time visually.
 - Percentage of time completed is shown below the progress bar.
+
+
+### 5: Bulk Actions
+Add Start, Pause, and Reset buttons at the category level to control all timers within that category simultaneously.
+
