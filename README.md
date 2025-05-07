@@ -46,3 +46,6 @@ View the history on a dedicated **History** screen.
 
 ### Deleting Record
 Implemented deleting History Records with deleting category Timers
+
+### Halfway Alert
+Each timer triggers a one-time alert at 50% of its duration.

@@ -95,6 +95,7 @@ const TimerListScreen = () => {
         ...t,
         timeLeft: t.duration,
         status: 'Paused',
+        halfwayAlertFired: false,
       }));
 
       setTimers(enriched);
@@ -113,7 +114,11 @@ const TimerListScreen = () => {
   const handlePause = (id) => updateTimer(id, { status: 'Paused' });
   const handleReset = (id) => {
     const timer = timers.find(t => t.id === id);
-    updateTimer(id, { timeLeft: timer.duration, status: 'Paused' });
+    updateTimer(id, {
+      timeLeft: timer.duration,
+      status: 'Paused',
+      halfwayAlertFired: false,
+    });
   };
 
   const saveToHistory = async (timer) => {
@@ -148,6 +153,22 @@ const TimerListScreen = () => {
         prev.map(timer => {
           if (timer.status === 'Running' && timer.timeLeft > 0) {
             const updatedTime = timer.timeLeft - 1;
+
+            const halfwayPoint = Math.floor(timer.duration / 2);
+
+          // Trigger halfway alert once
+          if (
+            updatedTime === halfwayPoint &&
+            !timer.halfwayAlertFired
+          ) {
+            alert(`⏳ "${timer.name}" is halfway done!`);
+            return {
+              ...timer,
+              timeLeft: updatedTime,
+              halfwayAlertFired: true,
+            };
+          }
+
             if (updatedTime === 0) {
               if (timer) {
                 saveToHistory(timer);
