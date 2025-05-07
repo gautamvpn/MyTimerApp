@@ -35,3 +35,11 @@ Add Start, Pause, and Reset buttons at the category level to control all timers 
 
 ### 6: User Feedback
 Show a modal with a congratulatory message and the timer's name when a timer completes.
+
+## Timer History
+
+Maintain a log of completed timers with the following details:
+- **Timer Name**
+- **Completion Time**
+
+View the history on a dedicated **History** screen.
